@@ -1,0 +1,1396 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Chemistry World</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background: #0a0e27;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Animated Background */
+    .animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at 20% 50%, rgba(120, 0, 255, 0.3), transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(0, 150, 255, 0.3), transparent 50%);
+    }
+
+    .molecule-float {
+      position: absolute;
+      font-size: 40px;
+      opacity: 0.3;
+      animation: float-molecule 10s infinite ease-in-out;
+    }
+
+    @keyframes float-molecule {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(50px, -30px) rotate(120deg); }
+      66% { transform: translate(-30px, 50px) rotate(240deg); }
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px 20px;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-size: 4em;
+      margin: 0;
+      background: linear-gradient(45deg, #00f2fe, #4facfe, #b721ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradient-shift 3s ease infinite;
+      text-shadow: 0 0 30px rgba(79, 172, 254, 0.5);
+    }
+
+    @keyframes gradient-shift {
+      0%, 100% { filter: hue-rotate(0deg); }
+      50% { filter: hue-rotate(30deg); }
+    }
+
+    .hero p {
+      font-size: 1.5em;
+      margin: 20px 0 40px;
+      opacity: 0.9;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-btn {
+      padding: 15px 30px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 25px rgba(79, 172, 254, 0.5);
+    }
+
+    .btn-periodic { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .btn-history { background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); color: #2d3436; }
+    .btn-simulator { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+    .btn-quiz { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+    .btn-game { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+
+    /* Main Content Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      font-size: 2.5em;
+      margin-bottom: 30px;
+      text-align: center;
+      background: linear-gradient(45deg, #4facfe, #00f2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .back-btn {
+      padding: 10px 25px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 25px;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(-5px);
+    }
+
+    /* Periodic Table */
+    .periodic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .element {
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 8px;
+    }
+
+    .element:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 30px rgba(102, 126, 234, 0.8);
+      z-index: 10;
+    }
+
+    .element-number {
+      font-size: 0.65em;
+      opacity: 0.8;
+      position: absolute;
+      top: 4px;
+      left: 6px;
+    }
+
+    .element-symbol {
+      font-size: 1.6em;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .element-name {
+      font-size: 0.55em;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .element.transition { background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); }
+    .element.nonmetal { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .element.noble { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .element.alkali { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+    .element.alkaline { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+    .element.metalloid { background: linear-gradient(135deg, #c471f5 0%, #fa71cd 100%); }
+    .element.halogen { background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); }
+    .element.lanthanide { background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%); }
+    .element.actinide { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); }
+    .element.metal { background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); }
+
+    /* Element Modal */
+    .element-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(10, 14, 39, 0.98);
+      padding: 40px;
+      border-radius: 20px;
+      border: 2px solid rgba(79, 172, 254, 0.5);
+      z-index: 1000;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 0 50px rgba(79, 172, 254, 0.5);
+    }
+
+    .element-modal.active {
+      display: block;
+      animation: modalPop 0.3s ease;
+    }
+
+    @keyframes modalPop {
+      from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 999;
+    }
+
+    .modal-overlay.active {
+      display: block;
+    }
+
+    .close-modal {
+      float: right;
+      font-size: 2em;
+      cursor: pointer;
+      color: #4facfe;
+      line-height: 1;
+    }
+
+    /* Reaction Simulator */
+    .simulator-controls {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .chemical-select {
+      padding: 15px 25px;
+      font-size: 1.2em;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #4facfe;
+      border-radius: 15px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .chemical-select.selected {
+      background: #4facfe;
+      transform: scale(1.1);
+    }
+
+    .react-btn {
+      padding: 15px 40px;
+      font-size: 1.3em;
+      background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .react-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(245, 87, 108, 0.7);
+    }
+
+    .reaction-display {
+      min-height: 300px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .explosion {
+      position: absolute;
+      font-size: 5em;
+      animation: explode 1s ease-out;
+    }
+
+    @keyframes explode {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(3); opacity: 0; }
+    }
+
+    .bubbles {
+      position: absolute;
+      bottom: 0;
+      width: 20px;
+      height: 20px;
+      background: rgba(79, 172, 254, 0.6);
+      border-radius: 50%;
+      animation: bubble-rise 2s ease-in-out infinite;
+    }
+
+    @keyframes bubble-rise {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-300px); opacity: 0; }
+    }
+
+    /* Quiz Section */
+    .quiz-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .quiz-question {
+      font-size: 1.5em;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .quiz-option {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(79, 172, 254, 0.3);
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    .quiz-option:hover {
+      background: rgba(79, 172, 254, 0.2);
+      border-color: #4facfe;
+    }
+
+    .quiz-option.correct {
+      background: rgba(67, 233, 123, 0.3);
+      border-color: #43e97b;
+    }
+
+    .quiz-option.wrong {
+      background: rgba(245, 87, 108, 0.3);
+      border-color: #f5576c;
+    }
+
+    .quiz-score {
+      text-align: center;
+      font-size: 2em;
+      margin-top: 30px;
+      color: #43e97b;
+    }
+
+    /* Molecule Game */
+    .game-canvas {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      min-height: 400px;
+      position: relative;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+
+    .atoms-palette {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .atom {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      cursor: grab;
+      transition: all 0.3s ease;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .atom:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .atom.hydrogen { background: #ff6b6b; color: white; }
+    .atom.oxygen { background: #4ecdc4; color: white; }
+    .atom.carbon { background: #95e1d3; color: #333; }
+
+    .build-area {
+      width: 100%;
+      max-width: 500px;
+      min-height: 250px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed rgba(79, 172, 254, 0.5);
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 20px;
+    }
+
+    .check-molecule-btn {
+      margin-top: 20px;
+      padding: 15px 40px;
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      border: none;
+      border-radius: 50px;
+      color: white;
+      font-size: 1.2em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .check-molecule-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(67, 233, 123, 0.7);
+    }
+
+    .game-result {
+      margin-top: 20px;
+      font-size: 1.5em;
+      text-align: center;
+    }
+
+    .success { color: #43e97b; }
+    .error { color: #f5576c; }
+
+    /* History Section */
+    .timeline-container {
+      position: relative;
+      padding: 40px 0;
+      margin-bottom: 60px;
+    }
+
+    .timeline-container::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+      transform: translateX(-50%);
+    }
+
+    .timeline-item {
+      display: flex;
+      margin-bottom: 50px;
+      position: relative;
+      align-items: center;
+    }
+
+    .timeline-item:nth-child(odd) {
+      flex-direction: row;
+    }
+
+    .timeline-item:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+
+    .timeline-year {
+      width: 120px;
+      text-align: center;
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #4facfe;
+      background: rgba(79, 172, 254, 0.2);
+      padding: 10px 20px;
+      border-radius: 25px;
+      border: 2px solid #4facfe;
+      position: relative;
+      z-index: 2;
+    }
+
+    .timeline-content {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 25px 30px;
+      border-radius: 15px;
+      margin: 0 40px;
+      border: 1px solid rgba(79, 172, 254, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .timeline-content:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #4facfe;
+      transform: scale(1.02);
+      box-shadow: 0 5px 20px rgba(79, 172, 254, 0.3);
+    }
+
+    .timeline-content h3 {
+      color: #4facfe;
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+
+    .timeline-content p {
+      margin: 0;
+      line-height: 1.7;
+      font-size: 1.05em;
+    }
+
+    .timeline-content strong {
+      color: #00f2fe;
+      font-weight: bold;
+    }
+
+    /* Scientists Grid */
+    .scientists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
+      margin-top: 50px;
+    }
+
+    .scientist-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      border: 2px solid rgba(79, 172, 254, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scientist-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .scientist-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .scientist-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #4facfe;
+      transform: translateY(-10px);
+      box-shadow: 0 10px 30px rgba(79, 172, 254, 0.4);
+    }
+
+    .scientist-icon {
+      font-size: 4em;
+      margin-bottom: 15px;
+      filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.5));
+    }
+
+    .scientist-card h3 {
+      color: #4facfe;
+      font-size: 1.5em;
+      margin: 10px 0;
+    }
+
+    .scientist-years {
+      color: #00f2fe;
+      font-size: 1.1em;
+      margin: 5px 0;
+      opacity: 0.9;
+    }
+
+    .scientist-contribution {
+      margin: 20px 0;
+      line-height: 1.6;
+      font-size: 1.05em;
+    }
+
+    .scientist-quote {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(79, 172, 254, 0.1);
+      border-left: 3px solid #4facfe;
+      font-style: italic;
+      border-radius: 5px;
+      font-size: 0.95em;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5em; }
+      .hero p { font-size: 1.2em; }
+      .periodic-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
+      .element-symbol { font-size: 1.3em; }
+      
+      .timeline-container::before {
+        left: 30px;
+      }
+      
+      .timeline-item {
+        flex-direction: column !important;
+        align-items: flex-start;
+        margin-left: 30px;
+      }
+      
+      .timeline-year {
+        margin-bottom: 15px;
+      }
+      
+      .timeline-content {
+        margin: 0;
+      }
+      
+      .scientists-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="animated-bg">
+   <div class="molecule-float" style="top: 10%; left: 15%;">
+    ⚛️
+   </div>
+   <div class="molecule-float" style="top: 60%; left: 75%; animation-delay: 2s;">
+    🧪
+   </div>
+   <div class="molecule-float" style="top: 80%; left: 20%; animation-delay: 4s;">
+    ⚗️
+   </div>
+  </div>
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="element-modal" id="elementModal"><span class="close-modal" id="closeModal">×</span>
+   <div id="modalContent"></div>
+  </div><!-- Hero Section -->
+  <section class="hero" id="heroSection">
+   <h1 id="siteTitle">CHEMISTRY ALIVE</h1>
+   <p id="heroTagline">Interactive world of chemical discoveries</p>
+   <div class="nav-buttons"><button class="nav-btn btn-periodic" onclick="showSection('periodic')">📊 Periodic Table</button> <button class="nav-btn btn-history" onclick="showSection('history')">📜 History of Chemistry</button> <button class="nav-btn btn-simulator" onclick="showSection('simulator')">⚗️ Reaction Simulator</button> <button class="nav-btn btn-quiz" onclick="showSection('quiz')">❓ Chemistry Myths</button> <button class="nav-btn btn-game" onclick="showSection('game')">🎮 Build a Molecule</button>
+   </div>
+  </section>
+  <main class="container"><!-- Periodic Table Section -->
+   <section class="section" id="periodicSection"><button class="back-btn" onclick="showSection('hero')">← Back</button>
+    <h2 class="section-title" id="periodicTitle">Interactive Periodic Table</h2>
+    <div class="periodic-grid" id="periodicGrid"></div>
+   </section><!-- History Section -->
+   <section class="section" id="historySection"><button class="back-btn" onclick="showSection('hero')">← Back</button>
+    <h2 class="section-title" id="historyTitle">History of Chemistry &amp; Atomic Theory</h2>
+    <div class="timeline-container"><!-- Timeline -->
+     <div class="timeline-item">
+      <div class="timeline-year">
+       ~400 BC
+      </div>
+      <div class="timeline-content">
+       <h3>🏛️ Ancient Greece - Birth of Atomic Idea</h3>
+       <p><strong>Democritus</strong> proposed that matter consists of indivisible particles called "atoms" (from Greek "atomos" - indivisible). Though he had no evidence, his philosophical idea laid the foundation for modern atomic theory!</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1661
+      </div>
+      <div class="timeline-content">
+       <h3>📚 Robert Boyle - Father of Modern Chemistry</h3>
+       <p><strong>Robert Boyle</strong> published "The Sceptical Chymist", distinguishing chemistry from alchemy. He defined elements as substances that cannot be decomposed into simpler substances, laying groundwork for modern chemistry.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1789
+      </div>
+      <div class="timeline-content">
+       <h3>⚖️ Antoine Lavoisier - Law of Conservation of Mass</h3>
+       <p><strong>Antoine Lavoisier</strong>, the "Father of Modern Chemistry", proved that matter is neither created nor destroyed in chemical reactions. He also created the first modern list of chemical elements and helped develop the metric system.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1803
+      </div>
+      <div class="timeline-content">
+       <h3>⚛️ John Dalton - Modern Atomic Theory</h3>
+       <p><strong>John Dalton</strong> proposed that all matter is made of atoms, which are indivisible and indestructible. He stated that atoms of the same element are identical, and atoms combine in simple whole-number ratios to form compounds.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1869
+      </div>
+      <div class="timeline-content">
+       <h3>📊 Dmitri Mendeleev - Periodic Table</h3>
+       <p><strong>Dmitri Mendeleev</strong> created the Periodic Table, organizing elements by atomic weight and properties. He even predicted the existence and properties of undiscovered elements! His table is the foundation of modern chemistry.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1897
+      </div>
+      <div class="timeline-content">
+       <h3>🔬 J.J. Thomson - Discovery of the Electron</h3>
+       <p><strong>Joseph John Thomson</strong> discovered the electron through cathode ray experiments, proving atoms are divisible. He proposed the "plum pudding model" - atoms as positive spheres with embedded negative electrons.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1911
+      </div>
+      <div class="timeline-content">
+       <h3>💥 Ernest Rutherford - Nuclear Model</h3>
+       <p><strong>Ernest Rutherford</strong> discovered the atomic nucleus through his gold foil experiment. He proved that atoms have a tiny, dense, positively charged core with electrons orbiting around it - revolutionizing atomic theory!</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1913
+      </div>
+      <div class="timeline-content">
+       <h3>🌟 Niels Bohr - Quantum Atomic Model</h3>
+       <p><strong>Niels Bohr</strong> proposed that electrons orbit the nucleus in specific energy levels or "shells". Electrons can jump between levels by absorbing or emitting energy, explaining atomic spectra and chemical bonding.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1932
+      </div>
+      <div class="timeline-content">
+       <h3>⚡ James Chadwick - Discovery of the Neutron</h3>
+       <p><strong>James Chadwick</strong> discovered the neutron, completing our understanding of atomic structure. Atoms consist of protons and neutrons in the nucleus, with electrons surrounding them.</p>
+      </div>
+     </div>
+     <div class="timeline-item">
+      <div class="timeline-year">
+       1934
+      </div>
+      <div class="timeline-content">
+       <h3>👩‍🔬 Marie Curie - Radioactivity Pioneer</h3>
+       <p><strong>Marie Curie</strong> was the first woman to win a Nobel Prize (and the only person to win in two sciences - Physics and Chemistry). She discovered radium and polonium, and coined the term "radioactivity". Her work opened the field of atomic physics!</p>
+      </div>
+     </div>
+    </div><!-- Scientists Profiles -->
+    <div class="scientists-grid">
+     <div class="scientist-card">
+      <div class="scientist-icon">
+       🧪
+      </div>
+      <h3>Dmitri Mendeleev</h3>
+      <p class="scientist-years">1834-1907</p>
+      <p class="scientist-contribution">Created the Periodic Table and predicted unknown elements</p>
+      <div class="scientist-quote">
+       "The elements, if arranged according to their atomic weights, show an evident periodicity of properties."
+      </div>
+     </div>
+     <div class="scientist-card">
+      <div class="scientist-icon">
+       ⚛️
+      </div>
+      <h3>Marie Curie</h3>
+      <p class="scientist-years">1867-1934</p>
+      <p class="scientist-contribution">Discovered radioactivity, radium &amp; polonium. 2× Nobel Prize winner</p>
+      <div class="scientist-quote">
+       "Nothing in life is to be feared, it is only to be understood."
+      </div>
+     </div>
+     <div class="scientist-card">
+      <div class="scientist-icon">
+       🔬
+      </div>
+      <h3>Ernest Rutherford</h3>
+      <p class="scientist-years">1871-1937</p>
+      <p class="scientist-contribution">Discovered the atomic nucleus and pioneered nuclear physics</p>
+      <div class="scientist-quote">
+       "All science is either physics or stamp collecting."
+      </div>
+     </div>
+     <div class="scientist-card">
+      <div class="scientist-icon">
+       💡
+      </div>
+      <h3>Niels Bohr</h3>
+      <p class="scientist-years">1885-1962</p>
+      <p class="scientist-contribution">Developed quantum model of the atom with electron shells</p>
+      <div class="scientist-quote">
+       "If quantum mechanics hasn't profoundly shocked you, you haven't understood it yet."
+      </div>
+     </div>
+     <div class="scientist-card">
+      <div class="scientist-icon">
+       ⚖️
+      </div>
+      <h3>Antoine Lavoisier</h3>
+      <p class="scientist-years">1743-1794</p>
+      <p class="scientist-contribution">Father of Modern Chemistry, Law of Conservation of Mass</p>
+      <div class="scientist-quote">
+       "In nature nothing is created, nothing is lost, everything changes."
+      </div>
+     </div>
+     <div class="scientist-card">
+      <div class="scientist-icon">
+       🌐
+      </div>
+      <h3>Linus Pauling</h3>
+      <p class="scientist-years">1901-1994</p>
+      <p class="scientist-contribution">Chemical bonding theory, only person with 2 unshared Nobel Prizes</p>
+      <div class="scientist-quote">
+       "The best way to have a good idea is to have lots of ideas."
+      </div>
+     </div>
+    </div>
+   </section><!-- Reaction Simulator Section -->
+   <section class="section" id="simulatorSection"><button class="back-btn" onclick="showSection('hero')">← Back</button>
+    <h2 class="section-title" id="simulatorTitle">Chemical Reaction Simulator</h2>
+    <div class="simulator-controls">
+     <div class="chemical-select" data-chemical="H2" onclick="selectChemical(this)">
+      H₂
+     </div>
+     <div class="chemical-select" data-chemical="O2" onclick="selectChemical(this)">
+      O₂
+     </div>
+     <div class="chemical-select" data-chemical="Na" onclick="selectChemical(this)">
+      Na
+     </div>
+     <div class="chemical-select" data-chemical="H2O" onclick="selectChemical(this)">
+      H₂O
+     </div>
+     <div class="chemical-select" data-chemical="Mg" onclick="selectChemical(this)">
+      Mg
+     </div>
+    </div><button class="react-btn" onclick="performReaction()">🔥 REACT!</button>
+    <div class="reaction-display" id="reactionDisplay">
+     <p>Select two substances and press the button</p>
+    </div>
+   </section><!-- Quiz Section -->
+   <section class="section" id="quizSection"><button class="back-btn" onclick="showSection('hero')">← Back</button>
+    <h2 class="section-title" id="quizTitle">Chemistry Myths: True or False?</h2>
+    <div class="quiz-container">
+     <div class="quiz-question" id="quizQuestion"></div>
+     <div class="quiz-options" id="quizOptions"></div>
+     <div class="quiz-score" id="quizScore"></div>
+    </div>
+   </section><!-- Molecule Game Section -->
+   <section class="section" id="gameSection"><button class="back-btn" onclick="showSection('hero')">← Back</button>
+    <h2 class="section-title" id="gameTitle">Build a Molecule</h2>
+    <div class="game-canvas">
+     <p style="margin-bottom: 20px;">Task: Build H₂O (water)</p>
+     <div class="atoms-palette">
+      <div class="atom hydrogen" onclick="addAtomToBuild('H', 'hydrogen')">
+       H
+      </div>
+      <div class="atom hydrogen" onclick="addAtomToBuild('H', 'hydrogen')">
+       H
+      </div>
+      <div class="atom oxygen" onclick="addAtomToBuild('O', 'oxygen')">
+       O
+      </div>
+      <div class="atom carbon" onclick="addAtomToBuild('C', 'carbon')">
+       C
+      </div>
+     </div>
+     <div class="build-area" id="buildArea">
+      <p style="opacity: 0.5;">Click on atoms above</p>
+     </div><button class="check-molecule-btn" onclick="checkMolecule()">✓ Check</button> <button class="check-molecule-btn" onclick="resetGame()" style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);">🔄 Reset</button>
+     <div class="game-result" id="gameResult"></div>
+    </div>
+   </section>
+  </main>
+  <script>
+    const defaultConfig = {
+      site_title: "CHEMISTRY ALIVE",
+      hero_tagline: "Interactive world of chemical discoveries",
+      periodic_title: "Interactive Periodic Table",
+      history_title: "History of Chemistry & Atomic Theory",
+      simulator_title: "Chemical Reaction Simulator",
+      quiz_title: "Chemistry Myths: True or False?",
+      game_title: "Build a Molecule"
+    };
+
+    const config = {};
+
+    async function onConfigChange(newConfig) {
+      document.getElementById('siteTitle').textContent = newConfig.site_title || defaultConfig.site_title;
+      document.getElementById('heroTagline').textContent = newConfig.hero_tagline || defaultConfig.hero_tagline;
+      document.getElementById('periodicTitle').textContent = newConfig.periodic_title || defaultConfig.periodic_title;
+      document.getElementById('historyTitle').textContent = newConfig.history_title || defaultConfig.history_title;
+      document.getElementById('simulatorTitle').textContent = newConfig.simulator_title || defaultConfig.simulator_title;
+      document.getElementById('quizTitle').textContent = newConfig.quiz_title || defaultConfig.quiz_title;
+      document.getElementById('gameTitle').textContent = newConfig.game_title || defaultConfig.game_title;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["site_title", config.site_title || defaultConfig.site_title],
+        ["hero_tagline", config.hero_tagline || defaultConfig.hero_tagline],
+        ["periodic_title", config.periodic_title || defaultConfig.periodic_title],
+        ["history_title", config.history_title || defaultConfig.history_title],
+        ["simulator_title", config.simulator_title || defaultConfig.simulator_title],
+        ["quiz_title", config.quiz_title || defaultConfig.quiz_title],
+        ["game_title", config.game_title || defaultConfig.game_title]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Navigation
+    function showSection(sectionName) {
+      document.querySelectorAll('.hero, .section').forEach(s => s.classList.remove('active'));
+      
+      if (sectionName === 'hero') {
+        document.getElementById('heroSection').style.display = 'flex';
+      } else {
+        document.getElementById('heroSection').style.display = 'none';
+        document.getElementById(sectionName + 'Section').classList.add('active');
+        
+        if (sectionName === 'periodic' && !periodicInitialized) {
+          initPeriodic();
+        } else if (sectionName === 'quiz' && !quizInitialized) {
+          initQuiz();
+        }
+      }
+    }
+
+    // Periodic Table - ALL 118 ELEMENTS
+    let periodicInitialized = false;
+    const elements = [
+      {symbol: 'H', name: 'Hydrogen', number: 1, type: 'nonmetal', fact: 'The lightest element in the Universe'},
+      {symbol: 'He', name: 'Helium', number: 2, type: 'noble', fact: 'Discovered in the Sun\'s spectrum'},
+      {symbol: 'Li', name: 'Lithium', number: 3, type: 'alkali', fact: 'Used in phone batteries'},
+      {symbol: 'Be', name: 'Beryllium', number: 4, type: 'alkaline', fact: 'Used in aerospace industry'},
+      {symbol: 'B', name: 'Boron', number: 5, type: 'metalloid', fact: 'Makes glass heat-resistant'},
+      {symbol: 'C', name: 'Carbon', number: 6, type: 'nonmetal', fact: 'The basis of all organic life'},
+      {symbol: 'N', name: 'Nitrogen', number: 7, type: 'nonmetal', fact: '78% of Earth\'s atmosphere'},
+      {symbol: 'O', name: 'Oxygen', number: 8, type: 'nonmetal', fact: 'Essential for breathing'},
+      {symbol: 'F', name: 'Fluorine', number: 9, type: 'halogen', fact: 'The most reactive element'},
+      {symbol: 'Ne', name: 'Neon', number: 10, type: 'noble', fact: 'Glows orange-red in signs'},
+      {symbol: 'Na', name: 'Sodium', number: 11, type: 'alkali', fact: 'Explodes in water!'},
+      {symbol: 'Mg', name: 'Magnesium', number: 12, type: 'alkaline', fact: 'Burns with bright white flame'},
+      {symbol: 'Al', name: 'Aluminum', number: 13, type: 'metal', fact: 'Most abundant metal on Earth'},
+      {symbol: 'Si', name: 'Silicon', number: 14, type: 'metalloid', fact: 'The heart of computer chips'},
+      {symbol: 'P', name: 'Phosphorus', number: 15, type: 'nonmetal', fact: 'Glows in the dark'},
+      {symbol: 'S', name: 'Sulfur', number: 16, type: 'nonmetal', fact: 'Smells like rotten eggs'},
+      {symbol: 'Cl', name: 'Chlorine', number: 17, type: 'halogen', fact: 'Used to disinfect pools'},
+      {symbol: 'Ar', name: 'Argon', number: 18, type: 'noble', fact: '1% of Earth\'s atmosphere'},
+      {symbol: 'K', name: 'Potassium', number: 19, type: 'alkali', fact: 'Essential for your heart'},
+      {symbol: 'Ca', name: 'Calcium', number: 20, type: 'alkaline', fact: 'Makes bones strong'},
+      {symbol: 'Sc', name: 'Scandium', number: 21, type: 'transition', fact: 'Used in aerospace alloys'},
+      {symbol: 'Ti', name: 'Titanium', number: 22, type: 'transition', fact: 'Strong as steel, half the weight'},
+      {symbol: 'V', name: 'Vanadium', number: 23, type: 'transition', fact: 'Makes steel super strong'},
+      {symbol: 'Cr', name: 'Chromium', number: 24, type: 'transition', fact: 'Makes stainless steel shiny'},
+      {symbol: 'Mn', name: 'Manganese', number: 25, type: 'transition', fact: 'In every aluminum can'},
+      {symbol: 'Fe', name: 'Iron', number: 26, type: 'transition', fact: 'In your blood'},
+      {symbol: 'Co', name: 'Cobalt', number: 27, type: 'transition', fact: 'Makes blue glass'},
+      {symbol: 'Ni', name: 'Nickel', number: 28, type: 'transition', fact: 'In stainless steel'},
+      {symbol: 'Cu', name: 'Copper', number: 29, type: 'transition', fact: 'Used for 10,000 years'},
+      {symbol: 'Zn', name: 'Zinc', number: 30, type: 'transition', fact: 'Protects steel from rust'},
+      {symbol: 'Ga', name: 'Gallium', number: 31, type: 'metal', fact: 'Melts in your hand'},
+      {symbol: 'Ge', name: 'Germanium', number: 32, type: 'metalloid', fact: 'Used in fiber optics'},
+      {symbol: 'As', name: 'Arsenic', number: 33, type: 'metalloid', fact: 'Poisonous but essential in tiny doses'},
+      {symbol: 'Se', name: 'Selenium', number: 34, type: 'nonmetal', fact: 'Antioxidant for health'},
+      {symbol: 'Br', name: 'Bromine', number: 35, type: 'halogen', fact: 'Only liquid nonmetal'},
+      {symbol: 'Kr', name: 'Krypton', number: 36, type: 'noble', fact: 'Makes bright white lights'},
+      {symbol: 'Rb', name: 'Rubidium', number: 37, type: 'alkali', fact: 'Ignites spontaneously in air'},
+      {symbol: 'Sr', name: 'Strontium', number: 38, type: 'alkaline', fact: 'Makes red fireworks'},
+      {symbol: 'Y', name: 'Yttrium', number: 39, type: 'transition', fact: 'In LED lights'},
+      {symbol: 'Zr', name: 'Zirconium', number: 40, type: 'transition', fact: 'Fake diamonds are made from it'},
+      {symbol: 'Nb', name: 'Niobium', number: 41, type: 'transition', fact: 'In superconductors'},
+      {symbol: 'Mo', name: 'Molybdenum', number: 42, type: 'transition', fact: 'Makes steel heat-resistant'},
+      {symbol: 'Tc', name: 'Technetium', number: 43, type: 'transition', fact: 'First man-made element'},
+      {symbol: 'Ru', name: 'Ruthenium', number: 44, type: 'transition', fact: 'Hardens platinum'},
+      {symbol: 'Rh', name: 'Rhodium', number: 45, type: 'transition', fact: 'Most expensive metal'},
+      {symbol: 'Pd', name: 'Palladium', number: 46, type: 'transition', fact: 'In catalytic converters'},
+      {symbol: 'Ag', name: 'Silver', number: 47, type: 'transition', fact: 'Best electrical conductor'},
+      {symbol: 'Cd', name: 'Cadmium', number: 48, type: 'transition', fact: 'Used in rechargeable batteries'},
+      {symbol: 'In', name: 'Indium', number: 49, type: 'metal', fact: 'In touchscreens'},
+      {symbol: 'Sn', name: 'Tin', number: 50, type: 'metal', fact: 'Makes bronze with copper'},
+      {symbol: 'Sb', name: 'Antimony', number: 51, type: 'metalloid', fact: 'Flame retardant'},
+      {symbol: 'Te', name: 'Tellurium', number: 52, type: 'metalloid', fact: 'In solar panels'},
+      {symbol: 'I', name: 'Iodine', number: 53, type: 'halogen', fact: 'Essential for thyroid health'},
+      {symbol: 'Xe', name: 'Xenon', number: 54, type: 'noble', fact: 'In car headlights'},
+      {symbol: 'Cs', name: 'Cesium', number: 55, type: 'alkali', fact: 'Used in atomic clocks'},
+      {symbol: 'Ba', name: 'Barium', number: 56, type: 'alkaline', fact: 'Makes green fireworks'},
+      {symbol: 'La', name: 'Lanthanum', number: 57, type: 'lanthanide', fact: 'In camera lenses'},
+      {symbol: 'Ce', name: 'Cerium', number: 58, type: 'lanthanide', fact: 'Most abundant rare earth'},
+      {symbol: 'Pr', name: 'Praseodymium', number: 59, type: 'lanthanide', fact: 'In aircraft engines'},
+      {symbol: 'Nd', name: 'Neodymium', number: 60, type: 'lanthanide', fact: 'Super strong magnets'},
+      {symbol: 'Pm', name: 'Promethium', number: 61, type: 'lanthanide', fact: 'Radioactive rare earth'},
+      {symbol: 'Sm', name: 'Samarium', number: 62, type: 'lanthanide', fact: 'In cancer treatment'},
+      {symbol: 'Eu', name: 'Europium', number: 63, type: 'lanthanide', fact: 'Makes euro notes glow'},
+      {symbol: 'Gd', name: 'Gadolinium', number: 64, type: 'lanthanide', fact: 'In MRI contrast agents'},
+      {symbol: 'Tb', name: 'Terbium', number: 65, type: 'lanthanide', fact: 'In green phosphors'},
+      {symbol: 'Dy', name: 'Dysprosium', number: 66, type: 'lanthanide', fact: 'In hard drive disks'},
+      {symbol: 'Ho', name: 'Holmium', number: 67, type: 'lanthanide', fact: 'Strongest magnetic field'},
+      {symbol: 'Er', name: 'Erbium', number: 68, type: 'lanthanide', fact: 'Amplifies internet signals'},
+      {symbol: 'Tm', name: 'Thulium', number: 69, type: 'lanthanide', fact: 'In portable X-ray machines'},
+      {symbol: 'Yb', name: 'Ytterbium', number: 70, type: 'lanthanide', fact: 'In atomic clocks'},
+      {symbol: 'Lu', name: 'Lutetium', number: 71, type: 'lanthanide', fact: 'Rarest rare earth'},
+      {symbol: 'Hf', name: 'Hafnium', number: 72, type: 'transition', fact: 'In nuclear reactors'},
+      {symbol: 'Ta', name: 'Tantalum', number: 73, type: 'transition', fact: 'In smartphones'},
+      {symbol: 'W', name: 'Tungsten', number: 74, type: 'transition', fact: 'Highest melting point'},
+      {symbol: 'Re', name: 'Rhenium', number: 75, type: 'transition', fact: 'In jet engines'},
+      {symbol: 'Os', name: 'Osmium', number: 76, type: 'transition', fact: 'Densest natural element'},
+      {symbol: 'Ir', name: 'Iridium', number: 77, type: 'transition', fact: 'Killed the dinosaurs'},
+      {symbol: 'Pt', name: 'Platinum', number: 78, type: 'transition', fact: 'Doesn\'t corrode'},
+      {symbol: 'Au', name: 'Gold', number: 79, type: 'transition', fact: 'Doesn\'t oxidize or rust'},
+      {symbol: 'Hg', name: 'Mercury', number: 80, type: 'transition', fact: 'Only liquid metal'},
+      {symbol: 'Tl', name: 'Thallium', number: 81, type: 'metal', fact: 'Once used as rat poison'},
+      {symbol: 'Pb', name: 'Lead', number: 82, type: 'metal', fact: 'Used in batteries'},
+      {symbol: 'Bi', name: 'Bismuth', number: 83, type: 'metal', fact: 'Rainbow crystal structure'},
+      {symbol: 'Po', name: 'Polonium', number: 84, type: 'metalloid', fact: 'Extremely radioactive'},
+      {symbol: 'At', name: 'Astatine', number: 85, type: 'halogen', fact: 'Rarest natural element'},
+      {symbol: 'Rn', name: 'Radon', number: 86, type: 'noble', fact: 'Radioactive gas in basements'},
+      {symbol: 'Fr', name: 'Francium', number: 87, type: 'alkali', fact: 'Most reactive element'},
+      {symbol: 'Ra', name: 'Radium', number: 88, type: 'alkaline', fact: 'Glows in the dark'},
+      {symbol: 'Ac', name: 'Actinium', number: 89, type: 'actinide', fact: 'Glows blue in darkness'},
+      {symbol: 'Th', name: 'Thorium', number: 90, type: 'actinide', fact: 'Future nuclear fuel'},
+      {symbol: 'Pa', name: 'Protactinium', number: 91, type: 'actinide', fact: 'Rare radioactive metal'},
+      {symbol: 'U', name: 'Uranium', number: 92, type: 'actinide', fact: 'Nuclear power fuel'},
+      {symbol: 'Np', name: 'Neptunium', number: 93, type: 'actinide', fact: 'First synthetic element'},
+      {symbol: 'Pu', name: 'Plutonium', number: 94, type: 'actinide', fact: 'Powers space probes'},
+      {symbol: 'Am', name: 'Americium', number: 95, type: 'actinide', fact: 'In smoke detectors'},
+      {symbol: 'Cm', name: 'Curium', number: 96, type: 'actinide', fact: 'Named after Marie Curie'},
+      {symbol: 'Bk', name: 'Berkelium', number: 97, type: 'actinide', fact: 'Made in particle accelerators'},
+      {symbol: 'Cf', name: 'Californium', number: 98, type: 'actinide', fact: 'Treats certain cancers'},
+      {symbol: 'Es', name: 'Einsteinium', number: 99, type: 'actinide', fact: 'Found in nuclear fallout'},
+      {symbol: 'Fm', name: 'Fermium', number: 100, type: 'actinide', fact: 'Named after Enrico Fermi'},
+      {symbol: 'Md', name: 'Mendelevium', number: 101, type: 'actinide', fact: 'Named after Mendeleev'},
+      {symbol: 'No', name: 'Nobelium', number: 102, type: 'actinide', fact: 'Named after Alfred Nobel'},
+      {symbol: 'Lr', name: 'Lawrencium', number: 103, type: 'actinide', fact: 'Last actinide element'},
+      {symbol: 'Rf', name: 'Rutherfordium', number: 104, type: 'transition', fact: 'Synthetic superheavy element'},
+      {symbol: 'Db', name: 'Dubnium', number: 105, type: 'transition', fact: 'Named after Dubna, Russia'},
+      {symbol: 'Sg', name: 'Seaborgium', number: 106, type: 'transition', fact: 'Named after Glenn Seaborg'},
+      {symbol: 'Bh', name: 'Bohrium', number: 107, type: 'transition', fact: 'Named after Niels Bohr'},
+      {symbol: 'Hs', name: 'Hassium', number: 108, type: 'transition', fact: 'Named after German state Hesse'},
+      {symbol: 'Mt', name: 'Meitnerium', number: 109, type: 'transition', fact: 'Named after Lise Meitner'},
+      {symbol: 'Ds', name: 'Darmstadtium', number: 110, type: 'transition', fact: 'Named after Darmstadt, Germany'},
+      {symbol: 'Rg', name: 'Roentgenium', number: 111, type: 'transition', fact: 'Named after Wilhelm Röntgen'},
+      {symbol: 'Cn', name: 'Copernicium', number: 112, type: 'transition', fact: 'Named after Copernicus'},
+      {symbol: 'Nh', name: 'Nihonium', number: 113, type: 'metal', fact: 'First element discovered in Asia'},
+      {symbol: 'Fl', name: 'Flerovium', number: 114, type: 'metal', fact: 'Named after Flerov Lab'},
+      {symbol: 'Mc', name: 'Moscovium', number: 115, type: 'metal', fact: 'Named after Moscow'},
+      {symbol: 'Lv', name: 'Livermorium', number: 116, type: 'metal', fact: 'Named after Livermore Lab'},
+      {symbol: 'Ts', name: 'Tennessine', number: 117, type: 'halogen', fact: 'Named after Tennessee'},
+      {symbol: 'Og', name: 'Oganesson', number: 118, type: 'noble', fact: 'Heaviest element discovered'}
+    ];
+
+    function initPeriodic() {
+      const grid = document.getElementById('periodicGrid');
+      grid.innerHTML = '';
+      
+      elements.forEach(el => {
+        const div = document.createElement('div');
+        div.className = `element ${el.type}`;
+        div.innerHTML = `
+          <div class="element-number">${el.number}</div>
+          <div class="element-symbol">${el.symbol}</div>
+          <div class="element-name">${el.name}</div>
+        `;
+        div.onclick = () => showElementInfo(el);
+        grid.appendChild(div);
+      });
+      
+      periodicInitialized = true;
+    }
+
+    function showElementInfo(element) {
+      const modal = document.getElementById('elementModal');
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      
+      content.innerHTML = `
+        <h2 style="font-size: 3em; margin: 20px 0;">${element.symbol}</h2>
+        <h3 style="color: #4facfe; margin: 10px 0;">${element.name}</h3>
+        <p style="font-size: 1.2em; margin: 10px 0;">Atomic number: ${element.number}</p>
+        <p style="font-size: 1.1em; margin: 20px 0; line-height: 1.6;">💡 ${element.fact}</p>
+        <div style="margin-top: 30px; padding: 20px; background: rgba(79, 172, 254, 0.2); border-radius: 10px;">
+          <p style="font-size: 1.1em;">🔬 Interesting: This element plays an important role in modern science and technology!</p>
+        </div>
+      `;
+      
+      modal.classList.add('active');
+      overlay.classList.add('active');
+    }
+
+    document.getElementById('closeModal').onclick = () => {
+      document.getElementById('elementModal').classList.remove('active');
+      document.getElementById('modalOverlay').classList.remove('active');
+    };
+
+    document.getElementById('modalOverlay').onclick = () => {
+      document.getElementById('elementModal').classList.remove('active');
+      document.getElementById('modalOverlay').classList.remove('active');
+    };
+
+    // Reaction Simulator
+    let selectedChemicals = [];
+
+    function selectChemical(element) {
+      if (element.classList.contains('selected')) {
+        element.classList.remove('selected');
+        selectedChemicals = selectedChemicals.filter(c => c !== element.dataset.chemical);
+      } else if (selectedChemicals.length < 2) {
+        element.classList.add('selected');
+        selectedChemicals.push(element.dataset.chemical);
+      }
+    }
+
+    function performReaction() {
+      const display = document.getElementById('reactionDisplay');
+      
+      if (selectedChemicals.length < 2) {
+        display.innerHTML = '<p>⚠️ Select two substances!</p>';
+        return;
+      }
+
+      const reactions = {
+        'H2+O2': {result: '💧 H₂O + 💥 EXPLOSION!', effect: 'explosion', description: 'Water formed with energy release!'},
+        'Na+H2O': {result: '💥 NaOH + H₂ + 🔥', effect: 'explosion', description: 'Vigorous reaction! Sodium explodes in water!'},
+        'Mg+O2': {result: '✨ MgO + Bright light', effect: 'light', description: 'Magnesium burns with dazzling white flame!'},
+      };
+
+      const combo1 = selectedChemicals.sort().join('+');
+      const combo2 = selectedChemicals.reverse().join('+');
+      const reaction = reactions[combo1] || reactions[combo2];
+
+      if (reaction) {
+        display.innerHTML = `
+          <div style="text-align: center;">
+            <p style="font-size: 1.5em; margin-bottom: 20px;">${selectedChemicals[0]} + ${selectedChemicals[1]} →</p>
+            <p style="font-size: 2em; margin: 20px 0;">${reaction.result}</p>
+            <p style="font-size: 1.1em; opacity: 0.9;">${reaction.description}</p>
+          </div>
+        `;
+
+        if (reaction.effect === 'explosion') {
+          createExplosion();
+        } else if (reaction.effect === 'light') {
+          createLight();
+        }
+      } else {
+        display.innerHTML = '<p>🤔 These substances don\'t react... or we haven\'t studied this reaction yet!</p>';
+      }
+
+      document.querySelectorAll('.chemical-select').forEach(el => el.classList.remove('selected'));
+      selectedChemicals = [];
+    }
+
+    function createExplosion() {
+      const display = document.getElementById('reactionDisplay');
+      const explosion = document.createElement('div');
+      explosion.className = 'explosion';
+      explosion.textContent = '💥';
+      explosion.style.left = '50%';
+      explosion.style.top = '50%';
+      display.appendChild(explosion);
+      setTimeout(() => explosion.remove(), 1000);
+    }
+
+    function createLight() {
+      const display = document.getElementById('reactionDisplay');
+      display.style.background = 'rgba(255, 255, 255, 0.9)';
+      display.style.transition = 'background 0.5s ease';
+      setTimeout(() => {
+        display.style.background = 'rgba(0, 0, 0, 0.3)';
+      }, 1000);
+    }
+
+    // Quiz
+    let quizInitialized = false;
+    let currentQuestion = 0;
+    let score = 0;
+
+    const quizQuestions = [
+      {
+        question: 'Is it true that soda can dissolve rust?',
+        options: ['Yes, because of acid', 'No, it\'s a myth'],
+        correct: 0,
+        explanation: 'Phosphoric acid in soda can indeed dissolve rust!'
+      },
+      {
+        question: 'Can mercury be turned into gold?',
+        options: ['Yes, alchemists were right', 'Theoretically yes, but unprofitable'],
+        correct: 1,
+        explanation: 'Using nuclear reactions, yes, but it costs more than gold itself!'
+      },
+      {
+        question: 'Is it true that diamond and graphite are the same element?',
+        options: ['Yes, both are carbon', 'No, different elements'],
+        correct: 0,
+        explanation: 'Both diamond and graphite are made of carbon, but have different structures!'
+      }
+    ];
+
+    function initQuiz() {
+      loadQuestion();
+      quizInitialized = true;
+    }
+
+    function loadQuestion() {
+      if (currentQuestion >= quizQuestions.length) {
+        showQuizResults();
+        return;
+      }
+
+      const q = quizQuestions[currentQuestion];
+      document.getElementById('quizQuestion').textContent = q.question;
+      
+      const optionsDiv = document.getElementById('quizOptions');
+      optionsDiv.innerHTML = '';
+      
+      q.options.forEach((option, index) => {
+        const div = document.createElement('div');
+        div.className = 'quiz-option';
+        div.textContent = option;
+        div.onclick = () => checkAnswer(index, div);
+        optionsDiv.appendChild(div);
+      });
+
+      document.getElementById('quizScore').textContent = '';
+    }
+
+    function checkAnswer(selected, element) {
+      const q = quizQuestions[currentQuestion];
+      const allOptions = document.querySelectorAll('.quiz-option');
+      
+      allOptions.forEach(opt => opt.style.pointerEvents = 'none');
+
+      if (selected === q.correct) {
+        element.classList.add('correct');
+        score++;
+      } else {
+        element.classList.add('wrong');
+        allOptions[q.correct].classList.add('correct');
+      }
+
+      setTimeout(() => {
+        currentQuestion++;
+        loadQuestion();
+      }, 2000);
+    }
+
+    function showQuizResults() {
+      document.getElementById('quizQuestion').textContent = '🎉 Quiz Complete!';
+      document.getElementById('quizOptions').innerHTML = `
+        <p style="text-align: center; font-size: 1.3em; padding: 30px;">
+          ${score === quizQuestions.length ? '🏆 Perfect! You\'re a chemistry genius!' : 
+            score >= quizQuestions.length / 2 ? '👏 Excellent! You know your chemistry!' : 
+            '📚 Not bad! Keep studying chemistry!'}
+        </p>
+        <button class="react-btn" onclick="resetQuiz()">🔄 Try Again</button>
+      `;
+      document.getElementById('quizScore').textContent = `Your score: ${score} out of ${quizQuestions.length}`;
+    }
+
+    function resetQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      loadQuestion();
+    }
+
+    // Molecule Game
+    let builtAtoms = [];
+
+    function addAtomToBuild(symbol, type) {
+      const buildArea = document.getElementById('buildArea');
+      
+      if (buildArea.querySelector('p')) {
+        buildArea.innerHTML = '';
+      }
+
+      const atom = document.createElement('div');
+      atom.className = `atom ${type}`;
+      atom.textContent = symbol;
+      atom.style.cursor = 'pointer';
+      atom.onclick = () => atom.remove();
+      
+      buildArea.appendChild(atom);
+      builtAtoms.push(symbol);
+    }
+
+    function checkMolecule() {
+      const buildArea = document.getElementById('buildArea');
+      const atoms = Array.from(buildArea.querySelectorAll('.atom')).map(a => a.textContent);
+      const result = document.getElementById('gameResult');
+
+      const h2oCheck = atoms.filter(a => a === 'H').length === 2 && 
+                       atoms.filter(a => a === 'O').length === 1 &&
+                       atoms.length === 3;
+
+      if (h2oCheck) {
+        result.innerHTML = '🎉 <span class="success">CORRECT! You built H₂O — water!</span>';
+        buildArea.style.animation = 'spin 2s ease-in-out';
+        setTimeout(() => buildArea.style.animation = '', 2000);
+      } else if (atoms.length === 0) {
+        result.innerHTML = '<span class="error">Add atoms to the build area</span>';
+      } else {
+        result.innerHTML = '<span class="error">Incorrect. Hint: water = 2 hydrogen + 1 oxygen</span>';
+      }
+    }
+
+    function resetGame() {
+      document.getElementById('buildArea').innerHTML = '<p style="opacity: 0.5;">Click on atoms above</p>';
+      document.getElementById('gameResult').innerHTML = '';
+      builtAtoms = [];
+    }
+
+    // Add spin animation for molecule
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.2); }
+        100% { transform: rotate(360deg) scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a18a22db47b0db3',t:'MTc2MzY0ODkwMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
