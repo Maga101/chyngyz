@@ -676,12 +676,32 @@
         grid-template-columns: 1fr;
       }
     }
+
+.logo-left {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 100px;
+  height: auto;
+}
+.logo-right {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 100px;
+  height: auto;
+}
+
+
   </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
  </head>
  <body>
+  <header>
+  <img src="logoo.jpeg" alt="Website Logo" class="logo">
+</header>
   <div class="animated-bg">
    <div class="molecule-float" style="top: 10%; left: 15%;">
     ⚛️
@@ -699,7 +719,7 @@
   </div><!-- Hero Section -->
   <section class="hero" id="heroSection">
    <h1 id="siteTitle">CHEMISTRY ALIVE</h1>
-   <p id="heroTagline">Interactive world of chemical discoveries</p>
+   <p id="heroTagline">Interactive world of chemical discoveries - Alymbek Datka</p>
    <div class="nav-buttons"><button class="nav-btn btn-periodic" onclick="showSection('periodic')">📊 Periodic Table</button> <button class="nav-btn btn-history" onclick="showSection('history')">📜 History of Chemistry</button> <button class="nav-btn btn-simulator" onclick="showSection('simulator')">⚗️ Reaction Simulator</button> <button class="nav-btn btn-quiz" onclick="showSection('quiz')">❓ Chemistry Myths</button> <button class="nav-btn btn-game" onclick="showSection('game')">🎮 Build a Molecule</button>
    </div>
   </section>
@@ -710,7 +730,7 @@
    </section><!-- History Section -->
    <section class="section" id="historySection"><button class="back-btn" onclick="showSection('hero')">← Back</button>
     <h2 class="section-title" id="historyTitle">History of Chemistry &amp; Atomic Theory</h2>
-    <div class="timeline-container"><!-- Timeline -->
+    <!--<div class="timeline-container">--><!-- Timeline -->
      <div class="timeline-item">
       <div class="timeline-year">
        ~400 BC
